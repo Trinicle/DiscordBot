@@ -3,39 +3,30 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('unban')
-        .setDescription('Unbans member(s)')
-        .addStringOption(option => option
-            .setName('users')
-            .setDescription(`unbans members separated by a space`)
+        .setDescription('unbans user')
+        .addUserOption(option => option
+            .setName('user')
+            .setDescription(`user to unban`)
             .setRequired(true))
+        .addStringOption(option => option
+            .setName('reason')
+            .setDescription('reason for unban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
     async execute(interaction) {
         await interaction.deferReply();
-        const usertoID = interaction.options.getString('users').replace(/<@|>/g, '');
-        const members = usertoID.split(' ');
-        for(const member of members) {
-            try {
-                await interaction.guild.members.unban(member);
-            } catch (err) {
-                if(err.code == 50013) {
-                    await interaction.editReply({ content: `Missing persmissions to unban <@!${member}>` })
-                } else if(err.code == 10007) {
-                    await interaction.editReply({ content: `Member <@!${member}> does not exist` })
-                } else if(err.code == 10013) {
-                    await interaction.editReply({ content: `User <@!${member}> does not exist` })
-                } else if(err.code == 10026) {
-                    await interaction.editReply({ content: `<@!${member}> is already unbanned`})
-                }
-                return;
-            }
-            if(members.length == 1) {
-                await interaction.editReply({ content: `<@!${member}> was unbanned` });
-            } else {
-                await interaction.channel.send(`<@!${member}> was unbanned`);
-            }
-        }
-        if(members.length > 1) {
-            await interaction.editReply( { content: 'Done!' });
+
+        const { options, user, guild } = interaction;
+
+        const target = options.getUser('user')
+        const reason = options.getString('reason') || 'No reason given';
+
+        const banned = await guild.bans.fetch(target.id).catch(async (err) => {
+            await interaction.editReply({ content: `<@!${target.id}> is not banned` })
+        })
+
+        if(banned) {
+            guild.members.unban(target.id, { reason: reason })
+            await interaction.editReply({ content: `<@!${target.id}> was unbanned` });
         }
         return;
     }

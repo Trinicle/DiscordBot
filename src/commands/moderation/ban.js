@@ -3,55 +3,30 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
-        .setDescription('Bans member(s)')
-        .addStringOption(option => option
-            .setName('users')
-            .setDescription(`bans members separated by a space`)
+        .setDescription('banss user')
+        .addUserOption(option => option
+            .setName('user')
+            .setDescription(`user to ban`)
             .setRequired(true))
         .addStringOption(option => option
             .setName('reason')
-            .setDescription('reason of ban'))
+            .setDescription('reason for ban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
     async execute(interaction) {
         await interaction.deferReply();
         
-        const user = interaction.options.getString('users').replace(/<@|>/g, '');
-        const reason = interaction.options.getString('reason');
-        const members = user.split(' ');
+        const { options, user, guild } = interaction;
 
+        const target = options.getUser('user')
+        const reason = options.getString('reason') || 'No reason given';
+        
+        const banned = await guild.bans.fetch(target.id).catch(async (err) => {
+            guild.members.ban(target.id, { reason: reason })
+            await interaction.editReply({ content: `<@!${target.id}> was banned` });
+        })
 
-
-        for(const member of members) {
-            const isBanned = await interaction.guild.bans.fetch(member).catch(err => {
-                console.log(err)
-            })
-            try {
-                if(!isBanned) {
-                    await interaction.guild.members.ban(member, { reason: reason})
-                }
-                else {
-                    await interaction.editReply({ content: `<@!${member}> is already banned` })
-                    return
-                }
-            } catch(err) {
-                console.log(err)
-                if(err.code == 50013) {
-                    await interaction.editReply({ content: `Missing persmissions to ban <@!${member}>` })
-                } else if(err.code == 10007) {
-                    await interaction.editReply({ content: `Member <@!${member}> does not exist` })
-                } else if(err.code == 10013) {
-                    await interaction.editReply({ content: `User <@!${member}> does not exist` })
-                }
-                return;
-            }
-            if(members.length == 1) {
-                await interaction.editReply({ content: `<@!${member}> was banned` });
-            } else {
-                await interaction.channel.send(`<@!${member}> was banned`);
-            }
-        }
-        if(members.length > 1) {
-            await interaction.editReply( {content: 'Done!'});
+        if(banned) {
+            await interaction.editReply({ content: `<@!${target.id}> is already banned` })
         }
         return;
     }

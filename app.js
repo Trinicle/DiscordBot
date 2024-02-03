@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Events, Collection, GatewayIntentBits, REST, Routes } = require('discord.js')
 const { chatlogEmbed } = require('./src/embeds/embeds.js')
-
+const mongoose = require("mongoose");
+ 
 const client = new Client({ intents: [
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildModeration,
@@ -82,15 +83,12 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
+mongoose.connect(process.env.DB_STRING)
+
 client.once(Events.ClientReady, () => {
     console.log('Ready')
 })
 
-
-// client.on('messageCreate', (message) => {
-// 	const member = message.mentions.members.first();
-// 	console.log(member)
-// })
 
 client.on('messageDelete', (message) => {
 	console.log(channelid);
