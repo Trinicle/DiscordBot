@@ -23,6 +23,8 @@ module.exports = {
                     await interaction.editReply({ content: `Member <@!${member}> does not exist` })
                 } else if(err.code == 10013) {
                     await interaction.editReply({ content: `User <@!${member}> does not exist` })
+                } else if(err.code == 10026) {
+                    await interaction.editReply({ content: `<@!${member}> is already unbanned`})
                 }
                 return;
             }
@@ -33,7 +35,7 @@ module.exports = {
             }
         }
         if(members.length > 1) {
-            await interaction.editReply( {content: 'Done!'});
+            await interaction.editReply( { content: 'Done!' });
         }
         return;
     }

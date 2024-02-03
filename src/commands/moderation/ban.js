@@ -8,15 +8,33 @@ module.exports = {
             .setName('users')
             .setDescription(`bans members separated by a space`)
             .setRequired(true))
+        .addStringOption(option => option
+            .setName('reason')
+            .setDescription('reason of ban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
     async execute(interaction) {
         await interaction.deferReply();
-        const usertoID = interaction.options.getString('users').replace(/<@|>/g, '');
-        const members = usertoID.split(' ');
+        
+        const user = interaction.options.getString('users').replace(/<@|>/g, '');
+        const reason = interaction.options.getString('reason');
+        const members = user.split(' ');
+
+
+
         for(const member of members) {
+            const isBanned = await interaction.guild.bans.fetch(member).catch(err => {
+                console.log(err)
+            })
             try {
-                await interaction.guild.members.ban(member);
-            } catch (err) {
+                if(!isBanned) {
+                    await interaction.guild.members.ban(member, { reason: reason})
+                }
+                else {
+                    await interaction.editReply({ content: `<@!${member}> is already banned` })
+                    return
+                }
+            } catch(err) {
+                console.log(err)
                 if(err.code == 50013) {
                     await interaction.editReply({ content: `Missing persmissions to ban <@!${member}>` })
                 } else if(err.code == 10007) {

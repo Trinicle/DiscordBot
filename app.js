@@ -87,11 +87,10 @@ client.once(Events.ClientReady, () => {
 })
 
 
-client.on('messageCreate', (message) => {
-	if(!message.author.bot) {
-
-	}
-})
+// client.on('messageCreate', (message) => {
+// 	const member = message.mentions.members.first();
+// 	console.log(member)
+// })
 
 client.on('messageDelete', (message) => {
 	console.log(channelid);
