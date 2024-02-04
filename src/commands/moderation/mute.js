@@ -120,12 +120,12 @@ module.exports = {
     
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription(`You have been muted in ${interaction.guild.name} | ${reason}`)
+                .setDescription(`You have been muted in ${interaction.guild.name} | ${reason}`);
     
             const embed2 = new EmbedBuilder()
                 .setColor("Red")
                 .setDescription(`**${target.username}** has been muted | ${reason}`)
-                .setFooter({ text: `Case: ${total} - ${schemaDateToDate(Date.now())}` })
+                .setFooter({ text: `Case: ${total} - ${schemaDateToDate(Date.now())}` });
     
             target.send({ embeds: [embed] }).catch(err => {
                 return;
@@ -141,6 +141,7 @@ module.exports = {
                     await interaction.editReply(`Mute role is higher than bot role`)
                     return;
                 }
-            }, time)
+            }, time);
+            return;
         }
 }

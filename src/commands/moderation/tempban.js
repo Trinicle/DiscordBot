@@ -5,55 +5,55 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('tempban')
         .setDescription('Bans member')
-        .addStringOption(option => option
-            .setName('users')
+        .addUserOption(option => option
+            .setName('user')
             .setDescription(`bans members separated by a space`)
+            .setRequired(true))
+        .addStringOption(option => option
+            .setName('duration')
+            .setDescription('duration for ban')
             .setRequired(true))
         .addStringOption(option => option
             .setName('reason')
             .setDescription('reason of ban'))
-        .addStringOption(option => option
-            .setName('duration')
-            .setDescription('duration for ban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
     async execute(interaction) {
         await interaction.deferReply();
         
-        const member = interaction.options.getString('users').replace(/<@|>/g, '');
-        const duration = interaction.options.getString('duration');
-        const reason = interaction.options.getString('reason');
+        const { options, user, guild } = interaction;
 
-        const isBanned = await interaction.guild.bans.fetch(member).catch(err => {
-            console.log(err)
-        })
+        const target = options.getUser('user');
+        const reason = options.getString('reason') || 'No reason given';
+        const duration = options.getString('duration') || 0;
+        const time = ms(duration);
+        console.log(target);
+        
+        const banned = await guild.bans.fetch(target.id).catch(async (err) => {
+            if(time < 0) {
+                await interaction.editReply(`duration must be non negative`);
+                return;
+            } 
 
-        try {
-            if(!isBanned) {
-                await interaction.guild.members.ban(member, { reason: reason})
+            if(!time) {
+                await interaction.editReply(`incorrect format, use s, m, d, y. Example: 1m`);
+                return;
             }
-            else {
-                await interaction.editReply({ content: `<@!${member}> is already banned` })
-                return
-            }
-        } catch(err) {
-            console.log(err)
-            if(err.code == 50013) {
-                await interaction.editReply({ content: `Missing persmissions to ban <@!${member}>` })
-            } else if(err.code == 10007) {
-                await interaction.editReply({ content: `Member <@!${member}> does not exist` })
-            } else if(err.code == 10013) {
-                await interaction.editReply({ content: `User <@!${member}> does not exist` })
-            }
+
+            guild.members.ban(target.id, { reason: reason })
+            await interaction.editReply({ content: `<@!${target.id}> was banned for ${reason}` });
+
+            setTimeout(async () => {
+                await guild.members.unban(target).catch(err => {
+                    console.log(err)
+                });
+            }, time);
+            return;
+        });
+
+        if(banned) {
+            await interaction.editReply({ content: `<@!${target.id}> is already banned` })
             return;
         }
-
-        !reason ? await interaction.editReply({ content: `<@!${member}> was banned` }) : await interaction.editReply({ content: `<@!${member}> was banned for ${reason}` })
-
-        setTimeout(async () => {
-            await interaction.guild.members.unban(member).catch(err => {
-                console.log(err)
-            });
-        }, ms(duration))
         return;
     }
 }
