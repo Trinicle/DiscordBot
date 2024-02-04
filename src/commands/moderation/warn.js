@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const totalSchema = require('../../schema/totalsSchema.js')
 const warningSchema = require('../../schema/warnSchema.js');
 
 module.exports = {
@@ -19,7 +20,22 @@ module.exports = {
         const { options, guildId, user } = interaction;
         
         const target = options.getUser('user');
-        const reason = options.getString('reason') || 'No reason given'
+        const reason = options.getString('reason') || 'No reason given';
+
+        let total = await totalSchema.findOne({ GuildID: guildId }).then((data) => {
+            let total = 0;
+            if(!data) {
+                data = new totalSchema({
+                    GuildID: guildId
+                })
+            } else {
+                data.infractionTotal += 1;
+                data.warnTotal += 1;
+                total = data.infractionTotal
+            }
+            data.save();
+            return total;
+        })
 
         warningSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
             if(!data) {
@@ -31,7 +47,11 @@ module.exports = {
                         {
                             ExecuterId: user.id,
                             ExecuterTag: user.tag,
-                            Reason: reason
+                            ResolvedId: null,
+                            ResolvedTag: null,
+                            Reason: reason,
+                            ID: total,
+                            Resolved: false
                         }
                     ],
                 });
@@ -39,7 +59,11 @@ module.exports = {
                 const warnContent = {
                     ExecuterId: user.id,
                     ExecuterTag: user.tag,
-                    Reason: reason
+                    ResolvedId: null,
+                    ResolvedTag: null,
+                    Reason: reason,
+                    ID: total,
+                    Resolved: false
                 }
                 data.Content.push(warnContent);
             }
@@ -54,7 +78,7 @@ module.exports = {
 
         const embed2 = new EmbedBuilder()
             .setColor("Blue")
-            .setDescription(`${target.username} has been warned | ${reason}`)
+            .setDescription(`**${target.username}** has been warned | ${reason}`)
 
         target.send({ embeds: [embed] }).catch(err => {
             return;
@@ -63,5 +87,3 @@ module.exports = {
         interaction.editReply({ embeds: [embed2] });
     }
 }
-
-// TODO: Change .addStringOption to .addUserOption for moderation commands

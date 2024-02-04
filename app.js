@@ -83,7 +83,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-mongoose.connect(process.env.DB_STRING)
+mongoose.connect(process.env.DB_STRING);
 
 client.once(Events.ClientReady, () => {
     console.log('Ready')

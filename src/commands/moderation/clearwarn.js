@@ -3,11 +3,11 @@ const warningSchema = require('../../schema/warnSchema.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('clearwarn')
+        .setName('resolve')
         .setDescription('This clear a members warnings')
-        .addUserOption(option => option
-            .setName('user')
-            .setDescription(`user you want to clear the warnings of`)
+        .addNumberOption(option => option
+            .setName('infraction')
+            .setDescription('ID of infraction')
             .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),     
     async execute(interaction) {
@@ -15,23 +15,39 @@ module.exports = {
 
         const { options, guildId, user } = interaction;
         
-        const target = options.getUser('user');
+        const infractionID = options.getNumber('infraction');
 
-        const embed = new EmbedBuilder()
+        const embed = new EmbedBuilder();
 
+        const warning = await warningSchema.findOneAndUpdate({ 
+            GuildID: guildId, 
+            'Content.ID': infractionID
+        },
+        {
+            $set: {
+                'Content.$.ResolvedId': user.id,
+                'Content.$.ResolvedTag': user.tag,
+                'Content.$.Resolved': true
+            }
+        },
+        { returnDocument: "after" }).then((data) => {
+            const rID = data.Content.find(item => item.ID == infractionID)
+            console.log(rID.ResolvedTag)
+            if(rID.ResolvedTag) {
+                embed.setColor("Blue")
+                .setDescription(`Infraction ${infractionID} has been resolved`)
+    
+                interaction.editReply({ embeds: [embed] })
+            } else {
+                interaction.editReply({ content: `<@!${rID.UserID}> has no warnings` })
+            }
+            return true;
+        }).catch((err) => {
+            console.log(err)
+        })
 
-        const data = await warningSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag })
-
-        if(data) {
-            await warningSchema.findOneAndDelete({ GuildID: guildId, UserID: target.id, UserTag: target.username })
-            
-            embed.setColor("Blue")
-            .setDescription(`${target.tag}'s warnings have been cleared`)
-
-            interaction.editReply({ embeds: [embed] })
-        } else {
-            interaction.editReply({ content: `${target.tag} has no warnings` })
+        if(!warning) {
+            await interaction.editReply({ content: `infraction does not exist`})
         }
-
     }
 }
