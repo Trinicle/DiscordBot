@@ -45,25 +45,29 @@ module.exports = {
                     UserTag: target.tag,
                     Content: [
                         {
+                            Type: 'warn',
                             ExecuterId: user.id,
                             ExecuterTag: user.tag,
                             ResolvedId: null,
                             ResolvedTag: null,
                             Reason: reason,
                             ID: total,
-                            Resolved: false
+                            Resolved: false,
+                            TimeStamp: Date.now()
                         }
                     ],
                 });
             } else {
                 const warnContent = {
+                    Type: 'warn',
                     ExecuterId: user.id,
                     ExecuterTag: user.tag,
                     ResolvedId: null,
                     ResolvedTag: null,
                     Reason: reason,
                     ID: total,
-                    Resolved: false
+                    Resolved: false,
+                    TimeStamp: Date.now()
                 }
                 data.Content.push(warnContent);
             }
