@@ -21,7 +21,7 @@ module.exports = {
         const embed = new EmbedBuilder()
         const nowarns = new EmbedBuilder()
 
-        infractionSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
+        infractionSchema.findOne({ GuildID: guildId, UserID: target.id }).then((data) => {
             if(data) {
                 embed.setColor("Red")
                     .setTitle(`**${target.tag}'s history**`)
