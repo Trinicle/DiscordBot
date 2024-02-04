@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const warningSchema = require('../../schema/warnSchema.js');
+const warningSchema = require('../../schema/infractionSchema.js');
+const { schemaDateToDate } = require('../../helpers/helpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -30,11 +31,10 @@ module.exports = {
                                 __**${w.Type.toUpperCase()} \`[case-${w.ID}]\` (${schemaDateToDate(w.TimeStamp)})**__
                                 **Moderator**: <@!${w.ExecuterId}>
                                 **Reason**: ${w.Reason}
-                                **[RESOLVED ${w.Resolved ? ':white_check_mark:' : ':x:'}]**
-                                ${w.Resolved ? `**Resolved By**: <@!${w.ResolvedId}>` : ''}
+                                **[RESOLVED ${w.Resolved ? ':white_check_mark:' : ':x:'}]**${w.Resolved ? `\n**Resolved By**: <@!${w.ResolvedId}>` : ''}
                             `
-                    ).join(`\n`)}`)
-                    .setFooter({ text: `${target.id} | ${schemaDateToDate(Date.now())}` })
+                    ).join(``)}`)
+                    .setFooter({ text: `ID: ${target.id} | ${schemaDateToDate(Date.now())}` })
                 interaction.editReply({ embeds: [embed] })
             } else {
                 nowarns.setColor("Green")
@@ -46,9 +46,4 @@ module.exports = {
             throw err
         })
     }
-}
-
-function schemaDateToDate(date) {
-    const today = new Date(date);
-    return today.toLocaleDateString();
 }

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const totalSchema = require('../../schema/totalsSchema.js')
-const warningSchema = require('../../schema/warnSchema.js');
+const infractionSchema = require('../../schema/infractionSchema.js');
+const { schemaDateToDate } = require('../../helpers/helpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -37,9 +38,9 @@ module.exports = {
             return total;
         })
 
-        warningSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
+        infractionSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
             if(!data) {
-                data = new warningSchema({ 
+                data = new infractionSchema({ 
                     GuildID: guildId,
                     UserID: target.id,
                     UserTag: target.tag,
@@ -77,12 +78,13 @@ module.exports = {
         })
 
         const embed = new EmbedBuilder()
-            .setColor("Blue")
+            .setColor("Red")
             .setDescription(`You have been warned in ${interaction.guild.name} | ${reason}`)
 
         const embed2 = new EmbedBuilder()
-            .setColor("Blue")
+            .setColor("Red")
             .setDescription(`**${target.username}** has been warned | ${reason}`)
+            .setFooter({ text: `Case: ${total} - ${schemaDateToDate(Date.now())}` })
 
         target.send({ embeds: [embed] }).catch(err => {
             return;

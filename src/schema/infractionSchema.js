@@ -1,10 +1,10 @@
 const { model, Schema } = require('mongoose')
 
-let warningSchema = new Schema({
+let infractionSchema = new Schema({
     GuildID: String,
     UserID: String,
     UserTag: String,
     Content: Array
 });
 
-module.exports = model("warn", warningSchema);
+module.exports = model("infraction", infractionSchema);

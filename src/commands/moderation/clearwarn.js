@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const warningSchema = require('../../schema/warnSchema.js');
+const warningSchema = require('../../schema/infractionSchema.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
