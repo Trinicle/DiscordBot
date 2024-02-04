@@ -23,27 +23,26 @@ module.exports = {
         const target = options.getUser('user');
         const reason = options.getString('reason') || 'No reason given';
 
-        let total = await totalSchema.findOne({ GuildID: guildId }).then((data) => {
-            let total = 0;
-            if(!data) {
-                data = new totalSchema({
-                    GuildID: guildId
-                })
-            } else {
-                data.infractionTotal += 1;
-                data.warnTotal += 1;
-                total = data.infractionTotal
-            }
-            data.save();
-            return total;
-        })
+        const total = infractionSchema.findOne({ GuildID: guildId, UserID: target.id }).then((data) => {
+            const total = totalSchema.findOne({ GuildID: guildId }).then((data) => {
+                let total = 0;
+                if(!data) {
+                    data = new totalSchema({
+                        GuildID: guildId
+                    })
+                } else {
+                    data.infractionTotal += 1;
+                    data.warnTotal += 1;
+                    total = data.infractionTotal
+                }
+                data.save();
+                return total;
+            })
 
-        infractionSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
             if(!data) {
                 data = new infractionSchema({ 
                     GuildID: guildId,
                     UserID: target.id,
-                    UserTag: target.tag,
                     Content: [
                         {
                             Type: 'warn',
@@ -73,8 +72,11 @@ module.exports = {
                 data.Content.push(warnContent);
             }
             data.save();
+            return total
         }).catch((err) => {
-            throw err
+            console.log(err)
+            interaction.editReply({ content: `Error` })
+            return;
         })
 
         const embed = new EmbedBuilder()
@@ -91,5 +93,6 @@ module.exports = {
         });
 
         interaction.editReply({ embeds: [embed2] });
+        return;
     }
 }

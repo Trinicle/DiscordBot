@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const warningSchema = require('../../schema/infractionSchema.js');
+const infractionSchema = require('../../schema/infractionSchema.js');
 const { schemaDateToDate } = require('../../helpers/helpers.js')
 
 module.exports = {
@@ -21,7 +21,7 @@ module.exports = {
         const embed = new EmbedBuilder()
         const nowarns = new EmbedBuilder()
 
-        warningSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
+        infractionSchema.findOne({ GuildID: guildId, UserID: target.id, UserTag: target.tag }).then((data) => {
             if(data) {
                 embed.setColor("Red")
                     .setTitle(`**${target.tag}'s history**`)
