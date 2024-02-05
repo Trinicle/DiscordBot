@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
+const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfraction } = require('../../helpers/helpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,19 +16,29 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply();
         
-        const { options, user, guild } = interaction;
+        const { options, user, guild, guildId } = interaction;
 
         const target = options.getUser('user')
         const reason = options.getString('reason') || 'No reason given';
-        
-        const banned = await guild.bans.fetch(target.id).catch(async (err) => {
+
+        const isBanned = await findActiveInfraction(guildId, target.id, 'ban');
+
+        let total = null;
+
+        if(!isBanned) {
             guild.members.ban(target.id, { reason: reason })
             await interaction.editReply({ content: `<@!${target.id}> was banned` });
-        })
+            total = await createInfraction(guildId, target, user, reason, 'ban');
 
-        if(banned) {
-            await interaction.editReply({ content: `<@!${target.id}> is already banned` })
+            const isTempbanned = await findActiveInfraction(guildId, target.id, 'tempban');
+
+            await updateInfraction(guildId, isTempbanned, 'tempban');
+        } else {
+            await interaction.editReply({ content: `<@!${target.id}> is already permbanned` })
+            return;
         }
+
+        //make embed
         return;
     }
 }
