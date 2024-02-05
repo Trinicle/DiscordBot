@@ -1,7 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
-const totalSchema = require('../../schema/totalsSchema.js')
-const infractionSchema = require('../../schema/infractionSchema.js');
-const { schemaDateToDate, findMute, updateMute, mute } = require('../../helpers/helpers.js');
+const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/helpers.js');
 const ms = require('ms')
 
 module.exports = {
@@ -53,24 +51,26 @@ module.exports = {
             } 
             
             const role = guild.roles.cache.find(role => role.id == roleid);
-            let total = null;
 
-            if(target.roles.cache.find(role => role.id == roleid)) {
-                total = await updateToNewMute(guildId, target, user, reason, time)
+            let infraction = await findActiveInfraction(guildId, target.id, 'mute');
+
+            if(infraction) {
+                await updateInfraction(guildId, infraction.ID);
             } else {
-                await target.roles.add(role).catch((err) => {
+                await target.roles.add(role).catch(async (err) => {
                     console.log(err);
+                    await interaction.editReply(`Mute role is higher than bot role`)
                     return null;
                 })
-                total = await mute(guildId, target, user, reason, time);
             }
 
+            const infractionID = await createTimedInfraction(guildId, target, user, reason, time, 'mute');
 
             setTimeout(async () => {
                 try {
-                    const infraction = await findMute(guildId, target);
-                    if(infraction) {
-                        updateMute(guildId, infraction)
+                    const infraction = await findActiveInfraction(guildId, target.id, 'mute');
+                    if(infraction.ID == infractionID) {
+                        updateInfraction(guildId, infraction.ID)
                         await target.roles.remove(role);
                         await interaction.followUp({ content: `<@!${target.id}> is no longer muted \`[case-${infraction.ID}]\`` })
                     }
@@ -81,38 +81,20 @@ module.exports = {
                 }
             }, time);
 
-            if(total && total != 0) {
-                const embed = new EmbedBuilder()
+            const embed = new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(`You have been muted in ${interaction.guild.name} | ${reason}`);
+
+            const embed2 = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription(`You have been muted in ${interaction.guild.name} | ${reason}`);
+                .setDescription(`**${target.user.tag}** has been muted | ${reason}`)
+                .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` });
     
-                const embed2 = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(`**${target.user.tag}** has been muted | ${reason}`)
-                    .setFooter({ text: `Case: ${total} - ${schemaDateToDate(Date.now())}` });
-        
-                target.send({ embeds: [embed] }).catch(err => {
-                    return;
-                });
-        
-                interaction.editReply({ embeds: [embed2] });
-
+            target.send({ embeds: [embed] }).catch(err => {
                 return;
-            } else {
-                await interaction.editReply(`Mute role is higher than bot role`)
-                return;
-            }
+            });
+    
+            interaction.editReply({ embeds: [embed2] });
+            return;
         }
-}
-
-updateToNewMute = async (guildId, target, user, reason, time) => {
-    const infraction = await findMute(guildId, target);
-
-    const updatedMute = await updateMute(guildId, infraction);
-
-    if(!updatedMute) {
-        return null;
-    }
-
-    return await mute(guildId, target, user, reason, time);
 }
