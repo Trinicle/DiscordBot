@@ -72,7 +72,15 @@ module.exports = {
                     if(infraction.ID == infractionID) {
                         updateInfraction(guildId, infraction.ID)
                         await target.roles.remove(role);
-                        await interaction.followUp({ content: `<@!${target.id}> is no longer muted \`[case-${infraction.ID}]\`` })
+
+                        const dmrEmbed = new EmbedBuilder()
+                            .setColor("DarkerGrey")
+                            .setDescription(`You are no longer muted in ${guild.name}`)
+                            .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` })
+
+                            target.send({ embeds: [dmrEmbed] }).catch(err => {
+                                return;
+                            });
                     }
                 } catch(err) {
                     console.log(err)
@@ -81,20 +89,20 @@ module.exports = {
                 }
             }, time);
 
-            const embed = new EmbedBuilder()
+            const muteEmbed = new EmbedBuilder()
             .setColor("Red")
-            .setDescription(`You have been muted in ${interaction.guild.name} | ${reason}`);
+            .setDescription(`You have been muted in ${guild.name} | ${reason}`);
 
-            const embed2 = new EmbedBuilder()
+            const dmEmbed = new EmbedBuilder()
                 .setColor("Red")
                 .setDescription(`**${target.user.tag}** has been muted | ${reason}`)
                 .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` });
     
-            target.send({ embeds: [embed] }).catch(err => {
+            target.send({ embeds: [muteEmbed] }).catch(err => {
                 return;
             });
     
-            interaction.editReply({ embeds: [embed2] });
+            interaction.editReply({ embeds: [dmEmbed] });
             return;
         }
 }

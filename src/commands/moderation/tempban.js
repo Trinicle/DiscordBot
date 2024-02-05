@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
 const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/helpers.js');
 const ms = require('ms')
 
@@ -28,8 +28,9 @@ module.exports = {
         const duration = options.getString('duration') || 0;
         const time = ms(duration);
 
-        let infraction = await findActiveInfraction(guildId, target.id, 'tempban');
-        const isBanned = await findActiveInfraction(guildId, target.id, 'ban');
+        const infraction = await findActiveInfraction(guildId, target.id, 'tempban');
+
+        console.log(infraction);
 
         if(time < 0) {
             await interaction.editReply(`Duration must be non negative.`);
@@ -41,37 +42,44 @@ module.exports = {
             return;
         }
 
-        if(isBanned) {
-            await interaction.editReply(`<@!${target.id}> is already permbanned.`);
-            return;
-        }
-
         if(infraction) {
             await updateInfraction(guildId, infraction.ID)
         }
 
-        const infractionID = await createTimedInfraction(guildId, target, user, reason, time, 'tempban');
+        try {
+            const infractionID = await createTimedInfraction(guildId, target, user, reason, time, 'tempban');
 
-        setTimeout(async () => {
-            try {
-                const infraction = await findActiveInfraction(guildId, target.id, 'tempban');
-                if(infraction.ID == infractionID) {
-                    updateInfraction(guildId, infraction.ID);
-                    await guild.members.unban(target);
-                    await interaction.followUp({ content: `<@!${target.id}> is no longer tempbanned \`[case-${infractionID}]\`` })
-                }
-            } catch(err) {
-                console.log(err)
+            const dmrEmbed = new EmbedBuilder()
+                .setColor("DarkerGrey")
+                .setDescription(`You have been banned from ${guild.name} | ${reason}`)
+                .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` })
+
+            target.send({ embeds: [dmrEmbed] }).catch(err => {
                 return;
-            }
-        }, time);
+            });
 
-        guild.members.ban(target.id, { reason: reason }).catch(async (err) => {
-            await interaction.editReply({ content: `Bot does not have permission to ban **${target.tag}**`})
-            return;
-        })
-        await interaction.editReply({ content: `<@!${target.id}> was banned | ${reason}` });
+            guild.members.ban(target.id, { reason: reason })
+            await interaction.editReply({ content: `**${target.tag}** was tempbanned | ${reason}` });
 
+
+            const unbanInfraction = await findActiveInfraction(guildId, target.id, 'unban');
+            const banInfraction = await findActiveInfraction(guildId, target.id, 'ban');
+
+            setTimeout(async () => {
+                try {
+                    const infraction = await findActiveInfraction(guildId, target.id, 'tempban');
+                    if(infraction.ID == infractionID) {
+                        updateInfraction(guildId, infraction.ID);
+                        await guild.members.unban(target);
+                    }
+                } catch(err) {
+                    console.log(err)
+                    return;
+                }
+            }, time);
+        } catch(err) {
+            await interaction.editReply({ content: `Bot does not have permission to tempban **${target.tag}**`})
+        }
         return;
     }
 }
