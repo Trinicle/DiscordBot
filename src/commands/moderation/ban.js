@@ -4,7 +4,7 @@ const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfracti
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
-        .setDescription('banss user')
+        .setDescription('Bans user')
         .addUserOption(option => option
             .setName('user')
             .setDescription(`user to ban`)
@@ -21,21 +21,30 @@ module.exports = {
         const target = options.getUser('user')
         const reason = options.getString('reason') || 'No reason given';
 
-        const isBanned = await findActiveInfraction(guildId, target.id, 'ban');
+        const unbanInfraction = await findActiveInfraction(guildId, target.id, 'unban');
 
-        let total = null;
+        const banInfraction = await guild.bans.fetch(target.id).catch((err) => {
+            return false;
+        });
 
-        if(!isBanned) {
-            guild.members.ban(target.id, { reason: reason })
-            await interaction.editReply({ content: `<@!${target.id}> was banned` });
-            total = await createInfraction(guildId, target, user, reason, 'ban');
+        if(!banInfraction) {
+            try {
+                guild.members.ban(target.id, { reason: reason });
+                await interaction.editReply({ content: `<@!${target.id}> was banned | ${reason}` });
 
-            const isTempbanned = await findActiveInfraction(guildId, target.id, 'tempban');
+                if(unbanInfraction) await updateInfraction(guildId, unbanInfraction.ID);
 
-            await updateInfraction(guildId, isTempbanned, 'tempban');
+                await createInfraction(guildId, target, user, reason, 'ban');
+
+                const tempbanInfraction = await findActiveInfraction(guildId, target.id, 'tempban');
+
+                if(tempbanInfraction) await updateInfraction(guildId, tempbanInfraction.ID, 'tempban');
+            } catch(err) {
+                await interaction.editReply({ content: `Bot does not have permission to ban <@!${target.id}>`})
+                console.log(err)
+            }
         } else {
-            await interaction.editReply({ content: `<@!${target.id}> is already permbanned` })
-            return;
+            await interaction.editReply({ content: `<@!${target.id}> is already permbanned.` })
         }
 
         //make embed

@@ -5,17 +5,17 @@ const ms = require('ms')
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('mute')
-        .setDescription('Mute member')
+        .setDescription('Mute member, old mute will be overwritten')
         .addUserOption(option => option
             .setName('user')
             .setDescription(`mutes the member`)
             .setRequired(true))
         .addStringOption(option => option
             .setName('duration')
-            .setDescription('duration of mute ('))
+            .setDescription('Duration of mute'))
         .addStringOption(option => option
             .setName('reason')
-            .setDescription('reason for mute'))
+            .setDescription('Reason for mute'))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),     
         async execute(interaction) {
             await interaction.deferReply();
@@ -36,17 +36,17 @@ module.exports = {
             }
 
             if(!guild.roles.cache.get(roleid)) {    
-                await interaction.editReply(`Mute role does not exist`)
+                await interaction.editReply(`Mute role does not exist.`)
                 return;
             }
 
             if(time < 0) {
-                await interaction.editReply(`duration must be non negative`)
+                await interaction.editReply(`Duration must be non negative.`)
                 return;
             } 
 
             if(!time) {
-                await interaction.editReply(`incorrect format, use s, m, d, y. Example: 1m`);
+                await interaction.editReply(`Incorrect format, use s, m, d, y. Example: 1m`);
                 return;
             } 
             
@@ -59,7 +59,7 @@ module.exports = {
             } else {
                 await target.roles.add(role).catch(async (err) => {
                     console.log(err);
-                    await interaction.editReply(`Mute role is higher than bot role`)
+                    await interaction.editReply(`Mute role is higher than bot role.`)
                     return null;
                 })
             }
@@ -76,7 +76,7 @@ module.exports = {
                     }
                 } catch(err) {
                     console.log(err)
-                    await interaction.editReply(`Mute role is higher than bot role`)
+                    await interaction.editReply(`Mute role is higher than bot role.`)
                     return;
                 }
             }, time);

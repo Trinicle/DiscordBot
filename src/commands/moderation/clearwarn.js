@@ -19,7 +19,7 @@ module.exports = {
         const infraction = await resolveInfraction(guildId, infractionID, user);
 
         if(!infraction) {
-            await interaction.editReply({ content:`Infraction does not exist` });
+            await interaction.editReply({ content:`Infraction does not exist.` });
             return;
         }
 

@@ -5,14 +5,14 @@ const ms = require('ms')
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('tempban')
-        .setDescription('Bans member')
+        .setDescription('Tempbans user, old tempban will be overwritten')
         .addUserOption(option => option
             .setName('user')
-            .setDescription(`bans members separated by a space`)
+            .setDescription(`Tempbans user`)
             .setRequired(true))
         .addStringOption(option => option
             .setName('duration')
-            .setDescription('duration for ban')
+            .setDescription('Duration for ban')
             .setRequired(true))
         .addStringOption(option => option
             .setName('reason')
@@ -32,17 +32,17 @@ module.exports = {
         const isBanned = await findActiveInfraction(guildId, target.id, 'ban');
 
         if(time < 0) {
-            await interaction.editReply(`duration must be non negative`);
+            await interaction.editReply(`Duration must be non negative.`);
             return;
         } 
 
         if(!time) {
-            await interaction.editReply(`incorrect format, use s, m, d, y. Example: 1m`);
+            await interaction.editReply(`Incorrect format, use s, m, d, y. Example: 1m`);
             return;
         }
 
         if(isBanned) {
-            await interaction.editReply(`User is already permbanned`);
+            await interaction.editReply(`<@!${target.id}> is already permbanned.`);
             return;
         }
 
@@ -66,8 +66,11 @@ module.exports = {
             }
         }, time);
 
-        guild.members.ban(target.id, { reason: reason })
-        await interaction.editReply({ content: `<@!${target.id}> was banned for ${reason}` });
+        guild.members.ban(target.id, { reason: reason }).catch(async (err) => {
+            await interaction.editReply({ content: `Bot does not have permission to ban **${target.tag}**`})
+            return;
+        })
+        await interaction.editReply({ content: `<@!${target.id}> was banned | ${reason}` });
 
         return;
     }
