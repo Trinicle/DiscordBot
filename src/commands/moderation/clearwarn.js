@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const warningSchema = require('../../schema/infractionSchema.js');
+const { schemaDateToDate, resolveInfraction } = require('../../helpers/helpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,38 +16,19 @@ module.exports = {
         const { options, guildId, user } = interaction;
         
         const infractionID = options.getNumber('infraction');
+        const infraction = await resolveInfraction(guildId, infractionID, user);
+
+        if(!infraction) {
+            await interaction.editReply({ content:`Infraction does not exist` });
+            return;
+        }
 
         const embed = new EmbedBuilder();
 
-        const warning = await warningSchema.findOneAndUpdate({ 
-            GuildID: guildId, 
-            'Content.ID': infractionID
-        },
-        {
-            $set: {
-                'Content.$.ResolvedId': user.id,
-                'Content.$.ResolvedTag': user.tag,
-                'Content.$.Resolved': true
-            }
-        },
-        { returnDocument: "after" }).then((data) => {
-            const rID = data.Content.find(item => item.ID == infractionID)
-            console.log(rID.ResolvedTag)
-            if(rID.ResolvedTag) {
-                embed.setColor("Blue")
-                .setDescription(`Infraction ${infractionID} has been resolved`)
-    
-                interaction.editReply({ embeds: [embed] })
-            } else {
-                interaction.editReply({ content: `<@!${rID.UserID}> has no warnings` })
-            }
-            return true;
-        }).catch((err) => {
-            console.log(err)
-        })
+        embed.setColor("Blue")
+            .setDescription(`\`[case-${infractionID}]\` has been resolved`);
+        interaction.editReply({ embeds: [embed] })
 
-        if(!warning) {
-            await interaction.editReply({ content: `infraction does not exist`})
-        }
+        return;
     }
 }
