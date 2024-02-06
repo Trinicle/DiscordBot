@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Events, Collection, GatewayIntentBits, REST, Routes, EmbedBuilder } = require('discord.js')
 const mongoose = require("mongoose");
-const modlogSchema = require('./src/schema/modlogSchema');
+const modlogSchema = require('./src/schema/modlogSchema.js');
+const chatlogSchema = require('./src/schema/chatlogSchema.js');
  
 const client = new Client({ intents: [
     GatewayIntentBits.GuildMembers,
@@ -17,6 +18,8 @@ client.modlogs = async (guild, target, user, infraction, reason, color) => {
 	const data = await modlogSchema.findOne({ GuildID: guild.id });
 	if(!data) return;
 
+	if(!data.Status) return;
+
 	const channel = guild.channels.cache.get(data.ChannelID);
 	const logsEmbed = new EmbedBuilder()
 		.setColor(color)
@@ -28,7 +31,27 @@ client.modlogs = async (guild, target, user, infraction, reason, color) => {
 		.setTimestamp()
 		.setFooter({ text: `ID: ${target.id}`});
 
-	channel.send({ embeds: [logsEmbed] })
+	channel.send({ embeds: [logsEmbed] });
+}
+
+client.chatlogs = async (guild, author, message, color) => {
+	const data = await chatlogSchema.findOne({ GuildID: guild.id });
+	if(!data) return;
+
+	if(!data.Status) return;
+
+	const channel = guild.channels.cache.get(data.ChannelID);
+	const logsEmbed = new EmbedBuilder()
+		.setColor(color)
+		.setAuthor({
+            name: `${author.tag} | ${author.id}`,
+            iconURL: author.displayAvatarURL({ format: 'png', dynamic: true, size: 4096 })
+		})
+		.setDescription(`**Content**\n${message.content}`)
+		.setTimestamp()
+		.setFooter({ text: `ID: ${message.id}`});
+	
+	channel.send({ embeds: [logsEmbed] });
 }
 
 const commands = [];
@@ -101,9 +124,14 @@ client.once(Events.ClientReady, () => {
     console.log('Ready')
 })
 
+client.on(Events.MessageCreate, (message) => {
+	const { author, mentions, guild, guildId } = message;
+})
 
-client.on('messageDelete', (message) => {
 
+client.on(Events.MessageDelete, (message) => {
+	const { author, mentions, guild, guildId } = message;
+	client.chatlogs(guild, author, message, 'Red' );
 })
 
 client.login(process.env.DISCORD_TOKEN);
