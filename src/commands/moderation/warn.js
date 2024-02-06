@@ -20,7 +20,7 @@ module.exports = {
         const { options, guildId, user, guild } = interaction;
         
         const target = options.getUser('user');
-        const reason = options.getString('reason') || 'No reason given';
+        const reason = options.getString('reason') || 'N/A';
         
         const infraction = await createInfraction(guildId, target, user, reason, 'warn');
 

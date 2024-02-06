@@ -19,7 +19,7 @@ module.exports = {
         const { options, user, guild, guildId } = interaction;
 
         const target = options.getUser('user')
-        const reason = options.getString('reason') || 'No reason given';
+        const reason = options.getString('reason') || 'N/A';
 
         const unbanInfraction = await guild.bans.fetch(target.id).catch((err) => {
             return false;

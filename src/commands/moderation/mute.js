@@ -26,7 +26,7 @@ module.exports = {
             const { options, guildId, user, guild } = interaction;
             
             const target = options.getMember('user');
-            const reason = options.getString('reason') || 'No reason given';
+            const reason = options.getString('reason') || 'N/A';
             const duration = options.getString('duration') || 0;
             const time = ms(duration)
 

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const infractionSchema = require('../../schema/infractionSchema.js');
-const { schemaDateToDate } = require('../../helpers/infractionhelpers.js')
+const { schemaDateToDate } = require('../../helpers/infractionhelpers.js');
+const { wrapText } = require('../../helpers/helpers.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -55,14 +56,28 @@ generateEmbed = async (infractions, target, end, page) => {
     const embed = new EmbedBuilder()
         .setColor("Red")
         .setTitle(`**${target.tag}'s history | ${target.id}**`)
-        .setDescription(`${current.map((infraction) => {
-            return `
-            __**${infraction.Type.toUpperCase()} \`[case-${infraction.ID}]\` (${schemaDateToDate(infraction.TimeStamp)})**__
-            **Moderator**: <@!${infraction.ExecuterId}>
-            **Reason**: ${infraction.Reason}
-            **[RESOLVED ${infraction.Resolved ? ':white_check_mark:' : ':x:'}]**${infraction.Resolved ? `\n**Resolved By**: <@!${infraction.ResolvedId}>` : ''}
-            `
-        }).join(``)}`)
         .setFooter({ text: `ID: ${target.id} | Page ${page}/${Math.ceil(infractions.length/10.0)}` })
+
+        var index = 0;
+        for(const infraction of current) {
+            index += 1;
+            embed.addFields({
+                name: `__**${infraction.Type.toUpperCase()} \`[case-${infraction.ID}]\`** ***(${schemaDateToDate(infraction.TimeStamp)})***__`,
+                value: `**Moderator**: <@!${infraction.ExecuterId}>
+                ${wrapText(`**Reason:** \`${infraction.Reason}\``,27)}
+                **[RESOLVED ${infraction.Resolved ? ':white_check_mark:' : ':x:'}]**${infraction.Resolved ? `\n**Resolved By**: <@!${infraction.ResolvedId}>` : ''}\n\u200b`,
+                inline: true
+            })
+            if(index%2 == 0) {
+                embed.addFields({
+                    name: '\u200b',
+                    value: '\u200b',
+                    inline: true
+                })
+            } else {
+
+            }
+
+        }
     return embed;
 }
