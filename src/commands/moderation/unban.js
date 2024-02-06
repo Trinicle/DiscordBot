@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
-const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfraction } = require('../../helpers/helpers.js')
+const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfraction } = require('../../helpers/infractionhelpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,7 +13,7 @@ module.exports = {
             .setName('reason')
             .setDescription('reason for unban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
-    async execute(interaction) {
+    async execute(client, interaction) {
         await interaction.deferReply();
 
         const { options, user, guild, guildId } = interaction;

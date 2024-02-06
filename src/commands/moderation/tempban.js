@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
-const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/helpers.js');
+const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/infractionhelpers.js');
 const ms = require('ms')
 
 module.exports = {
@@ -18,7 +18,7 @@ module.exports = {
             .setName('reason')
             .setDescription('reason of ban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
-    async execute(interaction) {
+    async execute(client, interaction) {
         await interaction.deferReply();
         
         const { options, user, guild, guildId } = interaction;
@@ -60,10 +60,6 @@ module.exports = {
 
             guild.members.ban(target.id, { reason: reason })
             await interaction.editReply({ content: `**${target.tag}** was tempbanned | ${reason}` });
-
-
-            const unbanInfraction = await findActiveInfraction(guildId, target.id, 'unban');
-            const banInfraction = await findActiveInfraction(guildId, target.id, 'ban');
 
             setTimeout(async () => {
                 try {

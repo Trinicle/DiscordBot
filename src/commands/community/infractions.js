@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const infractionSchema = require('../../schema/infractionSchema.js');
-const { schemaDateToDate } = require('../../helpers/helpers.js')
+const { schemaDateToDate } = require('../../helpers/infractionhelpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -11,7 +11,7 @@ module.exports = {
             .setDescription(`The member you want to check the infractions of`)
             .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),     
-    async execute(interaction) {
+    async execute(client, interaction) {
         await interaction.deferReply();
 
         const { options, guildId } = interaction;

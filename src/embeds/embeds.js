@@ -14,3 +14,24 @@ exports.chatlogEmbed = (message) => {
 
     return embed;
 };
+
+exports.infractionDMEmbed = (guild, target, user, infraction, reason, color) => {
+    const embed = new EmbedBuilder()
+        .setColor(color)
+        .setAuthor({
+            name: target.tag,
+            iconURL: target.displayAvatarURL({ format: 'png', dynamic: true, size: 4096 })
+        })
+		.setDescription(
+            `
+            **${infraction.Type.toUpperCase()}**
+            You have been moderated in **${guild.name}**
+            `)
+        .addFields(
+			{ name: `Case`, value: `${infraction.ID}`, inline: true },
+			{ name: `Moderator`, value: `${user.tag}`, inline: true },
+			{ name: `Reason`, value: reason })
+        .setTimestamp()
+        .setFooter({ text: `ID: ${user.id}`});
+    return embed;
+}

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
-const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/helpers.js');
+const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/infractionhelpers.js');
 const ms = require('ms')
 
 module.exports = {
@@ -17,7 +17,7 @@ module.exports = {
             .setName('reason')
             .setDescription('Reason for mute'))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),     
-        async execute(interaction) {
+        async execute(client, interaction) {
             await interaction.deferReply();
 
             let roleid = '1203206583916699718';     //temporary while there is no schema

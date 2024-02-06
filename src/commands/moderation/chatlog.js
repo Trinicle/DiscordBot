@@ -9,8 +9,8 @@ module.exports = {
             .setDescription('Channel name')
             .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),     
-    async execute(interaction) {
-        await interaction.deferReply({ephemeral: true});
+    async execute(client, interaction) {
+        await interaction.deferReply();
 
         const { options, guild } = interaction;
 

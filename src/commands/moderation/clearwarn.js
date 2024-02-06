@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { schemaDateToDate, resolveInfraction } = require('../../helpers/helpers.js')
+const { schemaDateToDate, resolveInfraction } = require('../../helpers/infractionhelpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -10,7 +10,7 @@ module.exports = {
             .setDescription('ID of infraction')
             .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),     
-    async execute(interaction) {
+    async execute(client, interaction) {
         await interaction.deferReply();
 
         const { options, guildId, user } = interaction;

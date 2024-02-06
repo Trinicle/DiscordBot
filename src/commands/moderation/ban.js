@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
-const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfraction } = require('../../helpers/helpers.js')
+const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfraction } = require('../../helpers/infractionhelpers.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,7 +13,7 @@ module.exports = {
             .setName('reason')
             .setDescription('reason for ban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),     
-    async execute(interaction) {
+    async execute(client, interaction) {
         await interaction.deferReply();
         
         const { options, user, guild, guildId } = interaction;
@@ -22,12 +22,12 @@ module.exports = {
         const reason = options.getString('reason') || 'No reason given';
 
         try {
-            const infractionID = await createInfraction(guildId, target, user, reason, 'ban');
+            const infraction = await createInfraction(guildId, target, user, reason, 'ban');
 
             const dmrEmbed = new EmbedBuilder()
             .setColor("DarkerGrey")
             .setDescription(`You have been banned from ${guild.name} | ${reason}`)
-            .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` })
+            .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` })
 
             target.send({ embeds: [dmrEmbed] }).catch(err => {
                 return;

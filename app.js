@@ -1,9 +1,9 @@
 require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Events, Collection, GatewayIntentBits, REST, Routes } = require('discord.js')
-const { chatlogEmbed } = require('./src/embeds/embeds.js')
+const { Client, Events, Collection, GatewayIntentBits, REST, Routes, EmbedBuilder } = require('discord.js')
 const mongoose = require("mongoose");
+const modlogSchema = require('./src/schema/modlogSchema');
  
 const client = new Client({ intents: [
     GatewayIntentBits.GuildMembers,
@@ -13,11 +13,28 @@ const client = new Client({ intents: [
     GatewayIntentBits.MessageContent
 ]})
 
-client.commands = new Collection();
+client.modlogs = async (guild, target, user, infraction, reason, color) => {
+	const data = await modlogSchema.findOne({ GuildID: guild.id });
+	if(!data) return;
+
+	const channel = guild.channels.cache.get(data.ChannelID);
+	const logsEmbed = new EmbedBuilder()
+		.setColor(color)
+		.setDescription(`**${infraction.Type.toUpperCase()}** | \`[case-${infraction.ID}]\``)
+		.addFields(
+			{ name: `Target`, value: `<@!${target.id}>`, inline: true },
+			{ name: `Moderator`, value: `<@!${user.id}>`, inline: true },
+			{ name: `Reason`, value: reason })
+		.setTimestamp()
+		.setFooter({ text: `ID: ${user.id}`});
+
+	channel.send({ embeds: [logsEmbed] })
+}
 
 const commands = [];
 const foldersPath = path.join(__dirname, 'src/commands');
 const commandFolders = fs.readdirSync(foldersPath);
+client.commands = new Collection();
 
 for (const folder of commandFolders) {
 	const commandsPath = path.join(foldersPath, folder);
@@ -59,7 +76,6 @@ for (const folder of commandFolders) {
 		}
 	}
 }
-var channelid = null
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
@@ -72,11 +88,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 
 	try {
-        if(interaction.commandName == 'setchatlog') {
-            channelid = await command.execute(interaction);
-        } else {
-            await command.execute(interaction);
-        }
+        await command.execute(client, interaction);
 	}
 	catch (error) {
 		console.error(error);
@@ -91,11 +103,7 @@ client.once(Events.ClientReady, () => {
 
 
 client.on('messageDelete', (message) => {
-	console.log(channelid);
-    if(!message.author.bot && channelid) {
-		const embed = chatlogEmbed(message)
-        client.channels.cache.get(channelid).send({ embeds: [embed] })
-    }
+
 })
 
 client.login(process.env.DISCORD_TOKEN);
