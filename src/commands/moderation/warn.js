@@ -24,20 +24,20 @@ module.exports = {
         
         const infraction = await createInfraction(guildId, target, user, reason, 'warn');
 
-        const embed = infractionDMEmbed(guild, target, user, infraction, reason, 'DarkOrange')
-
-        const embed2 = new EmbedBuilder()
-            .setColor("Red")
-            .setDescription(`**${target.username}** has been warned | ${reason}`)
-            .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` })
+        const embed = infractionDMEmbed(guild, target, user, infraction, reason, 'DarkOrange');
 
         target.send({ embeds: [embed] }).catch(err => {
             return;
         });
 
+        const embed2 = new EmbedBuilder()
+            .setColor("DarkOrange")
+            .setDescription(`**${target.username}** has been warned | ${reason}`)
+            .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` });
+
         await interaction.editReply({ embeds: [embed2] });
 
-        client.modlogs(guild, target, user, infraction, reason, "Red")
+        client.modlogs(guild, target, user, infraction, reason, "DarkOrange")
 
         return;
     }

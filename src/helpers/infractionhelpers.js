@@ -91,7 +91,7 @@ exports.resolveInfraction = async (guildId, Id, user) => {
 }
 
 exports.createInfraction = async (guildId, target, user, reason, type) => {
-    const total = await infractionSchema.findOne({ GuildID: guildId, UserID: target.id }).then(async (data) => {
+    const infraction = await infractionSchema.findOne({ GuildID: guildId, UserID: target.id }).then(async (data) => {
         const total = await totalSchema.findOne({ GuildID: guildId }).then((data) => {
             let total = 0;
             if(!data) {
@@ -148,11 +148,11 @@ exports.createInfraction = async (guildId, target, user, reason, type) => {
         interaction.editReply({ content: `Error` })
         return;
     })
-    return total;
+    return infraction;
 }
 
 exports.createTimedInfraction = async (guildId, target, user, reason, time, type) => {
-    const total = await infractionSchema.findOne({ GuildID: guildId, UserID: target.id }).then(async (data) => {
+    const infraction = await infractionSchema.findOne({ GuildID: guildId, UserID: target.id }).then(async (data) => {
         const total = await totalSchema.findOne({ GuildID: guildId }).then((data) => {
             let total = 0;
             if(!data) {
@@ -188,6 +188,8 @@ exports.createTimedInfraction = async (guildId, target, user, reason, time, type
                     }
                 ],
             });
+            data.save();
+            return data.Content[0];
         } else {
             const warnContent = {
                 Type: type,
@@ -203,13 +205,14 @@ exports.createTimedInfraction = async (guildId, target, user, reason, time, type
                 TimeStamp: Date.now()
             }
             data.Content.push(warnContent);
+            data.save();
+            return warnContent;
         }
-        data.save();
-        return total;
+
     }).catch((err) => {
         console.log(err);;
         return null;
     })
 
-    return total;
+    return infraction;
 }

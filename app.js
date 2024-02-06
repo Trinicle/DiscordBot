@@ -26,7 +26,7 @@ client.modlogs = async (guild, target, user, infraction, reason, color) => {
 			{ name: `Moderator`, value: `<@!${user.id}>`, inline: true },
 			{ name: `Reason`, value: reason })
 		.setTimestamp()
-		.setFooter({ text: `ID: ${user.id}`});
+		.setFooter({ text: `ID: ${target.id}`});
 
 	channel.send({ embeds: [logsEmbed] })
 }

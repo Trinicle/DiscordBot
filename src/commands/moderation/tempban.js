@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
 const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/infractionhelpers.js');
 const ms = require('ms')
+const { infractionDMEmbed } = require('../../embeds/embeds.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -30,8 +31,6 @@ module.exports = {
 
         const infraction = await findActiveInfraction(guildId, target.id, 'tempban');
 
-        console.log(infraction);
-
         if(time < 0) {
             await interaction.editReply(`Duration must be non negative.`);
             return;
@@ -47,24 +46,29 @@ module.exports = {
         }
 
         try {
-            const infractionID = await createTimedInfraction(guildId, target, user, reason, time, 'tempban');
+            const newInfraction = await createTimedInfraction(guildId, target, user, reason, time, 'tempban');
 
-            const dmrEmbed = new EmbedBuilder()
-                .setColor("DarkerGrey")
-                .setDescription(`You have been banned from ${guild.name} | ${reason}`)
-                .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` })
+            const embed = infractionDMEmbed(guild, target, user, newInfraction, reason, 'DarkRed');
 
-            target.send({ embeds: [dmrEmbed] }).catch(err => {
+            await target.send({ embeds: [embed] }).then(() => {
+                guild.members.ban(target.id, { reason: reason })
+            }).catch(err => {
                 return;
             });
 
-            guild.members.ban(target.id, { reason: reason })
-            await interaction.editReply({ content: `**${target.tag}** was tempbanned | ${reason}` });
+            const embed2 = new EmbedBuilder()
+                .setColor("DarkRed")
+                .setDescription(`**${target.username}** has been tempbanned | ${reason}`)
+                .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` });
+
+            await interaction.editReply({ embeds: [embed2] });
+
+            client.modlogs(guild, target, user, newInfraction, reason, "DarkRed")
 
             setTimeout(async () => {
                 try {
                     const infraction = await findActiveInfraction(guildId, target.id, 'tempban');
-                    if(infraction.ID == infractionID) {
+                    if(infraction.ID == newInfraction.ID) {
                         updateInfraction(guildId, infraction.ID);
                         await guild.members.unban(target);
                     }

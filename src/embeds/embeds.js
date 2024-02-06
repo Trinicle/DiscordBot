@@ -19,7 +19,7 @@ exports.infractionDMEmbed = (guild, target, user, infraction, reason, color) => 
     const embed = new EmbedBuilder()
         .setColor(color)
         .setAuthor({
-            name: target.tag,
+            name: target.tag ? target.tag : target.user.tag,
             iconURL: target.displayAvatarURL({ format: 'png', dynamic: true, size: 4096 })
         })
 		.setDescription(

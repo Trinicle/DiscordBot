@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
 const { schemaDateToDate, createInfraction, updateInfraction, findActiveInfraction } = require('../../helpers/infractionhelpers.js')
+const { infractionDMEmbed } = require('../../embeds/embeds.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -24,17 +25,23 @@ module.exports = {
         try {
             const infraction = await createInfraction(guildId, target, user, reason, 'ban');
 
-            const dmrEmbed = new EmbedBuilder()
-            .setColor("DarkerGrey")
-            .setDescription(`You have been banned from ${guild.name} | ${reason}`)
-            .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` })
+            const embed = infractionDMEmbed(guild, target, user, infraction, reason, 'Red');
 
-            target.send({ embeds: [dmrEmbed] }).catch(err => {
+            await target.send({ embeds: [embed] }).then(() => {
+                guild.members.ban(target.id, { reason: reason });
+            }).catch(err => {
+                console.log("hi")
                 return;
             });
 
-            guild.members.ban(target.id, { reason: reason });
-            await interaction.editReply({ content: `**${target.tag}** was banned | ${reason}` });
+            const embed2 = new EmbedBuilder()
+                .setColor("Red")
+                .setDescription(`**${target.username}** has been banned | ${reason}`)
+                .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` });
+
+            await interaction.editReply({ embeds: [embed2] });
+
+            client.modlogs(guild, target, user, infraction, reason, "Red");
 
             const tempbanInfraction = await findActiveInfraction(guildId, target.id, 'tempban');
 

@@ -28,12 +28,21 @@ module.exports = {
         if(unbanInfraction) {
             try {
                 guild.members.unban(target.id, { reason: reason })
-                await interaction.editReply({ content: `<@!${target.id}> was unbanned | ${reason}` });
-                await createInfraction(guildId, target, user, reason, 'unban');
+
+                const infraction = await createInfraction(guildId, target, user, reason, 'unban');
+
+                const embed2 = new EmbedBuilder()
+                    .setColor("Green")
+                    .setDescription(`**${target.username}** has been unbanned | ${reason}`)
+                    .setFooter({ text: `Case: ${infraction.ID} - ${schemaDateToDate(Date.now())}` });
+
+                await interaction.editReply({ embeds: [embed2] });
 
                 const tempbanInfraction = await findActiveInfraction(guildId, target.id, 'tempban');
                 
                 if(tempbanInfraction) await updateInfraction(guildId, tempbanInfraction.ID, 'tempban');
+
+                client.modlogs(guild, target, user, infraction, reason, "Green")
             } catch (err) {
                 console.log(err);
             }

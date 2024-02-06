@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
 const { schemaDateToDate, findActiveInfraction, updateInfraction, createTimedInfraction } = require('../../helpers/infractionhelpers.js');
 const ms = require('ms')
+const { infractionDMEmbed } = require('../../embeds/embeds.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -64,19 +65,33 @@ module.exports = {
                 })
             }
 
-            const infractionID = await createTimedInfraction(guildId, target, user, reason, time, 'mute');
+            const newInfraction = await createTimedInfraction(guildId, target, user, reason, time, 'mute');
+            
+            client.modlogs(guild, target, user, newInfraction, reason, "DarkBlue");
+            
+            const embed = infractionDMEmbed(guild, target, user, newInfraction, reason, 'DarkBlue');
+
+            target.send({ embeds: [embed] }).catch(err => {
+                return;
+            });
+
+            const muteEmbed = new EmbedBuilder()
+            .setColor("DarkBlue")
+            .setDescription(`**${target.tag}** has been muted in | ${reason}`);
+    
+            interaction.editReply({ embeds: [muteEmbed] });
 
             setTimeout(async () => {
                 try {
                     const infraction = await findActiveInfraction(guildId, target.id, 'mute');
-                    if(infraction.ID == infractionID) {
+                    if(infraction.ID == newInfraction.ID) {
                         updateInfraction(guildId, infraction.ID)
                         await target.roles.remove(role);
 
                         const dmrEmbed = new EmbedBuilder()
                             .setColor("DarkerGrey")
-                            .setDescription(`You are no longer muted in ${guild.name}`)
-                            .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` })
+                            .setDescription(`You are no longer muted in **${guild.name}**`)
+                            .setFooter({ text: `Case: ${newInfraction.ID} - ${schemaDateToDate(Date.now())}` })
 
                             target.send({ embeds: [dmrEmbed] }).catch(err => {
                                 return;
@@ -88,21 +103,6 @@ module.exports = {
                     return;
                 }
             }, time);
-
-            const muteEmbed = new EmbedBuilder()
-            .setColor("Red")
-            .setDescription(`You have been muted in ${guild.name} | ${reason}`);
-
-            const dmEmbed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription(`**${target.user.tag}** has been muted | ${reason}`)
-                .setFooter({ text: `Case: ${infractionID} - ${schemaDateToDate(Date.now())}` });
-    
-            target.send({ embeds: [muteEmbed] }).catch(err => {
-                return;
-            });
-    
-            interaction.editReply({ embeds: [dmEmbed] });
             return;
         }
 }
